@@ -1,0 +1,8 @@
+apiVersion: cotool.ai/v1
+kind: ResponseAgent
+metadata:
+  syncKey: broken-unknown-key
+  name: Broken Unknown Key
+spec:
+  modelAlias: anthropic:chat:sonnet-4.6
+  toolNames: [slack]

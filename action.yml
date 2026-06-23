@@ -1,0 +1,44 @@
+name: 'Cotool Validate Agents'
+description: 'Validate Cotool Response-Agents-as-Code YAML in CI against the Cotool validate API, with inline PR annotations.'
+author: 'Cotool'
+branding:
+  icon: 'check-circle'
+  color: 'purple'
+
+inputs:
+  api_url:
+    description: 'Base URL of the Cotool API.'
+    required: false
+    default: 'https://app.cotool.ai'
+  dir:
+    description: 'Repo-relative directory to scan for agent YAML (and referenced prompt .md files). Matches the GitOps sync `path` default.'
+    required: false
+    default: 'cotool/agents'
+  file:
+    description: 'Optional comma-separated list of specific files to validate. When set, overrides directory discovery.'
+    required: false
+    default: ''
+  recursive:
+    description: 'Recurse into subdirectories of `dir` when discovering files.'
+    required: false
+    default: 'true'
+  audience:
+    description: 'OIDC audience requested from GitHub and verified by the Cotool API.'
+    required: false
+    default: 'cotool-validate'
+  fail_on_warnings:
+    description: 'Fail the check when any warnings are present (errors always fail).'
+    required: false
+    default: 'false'
+
+outputs:
+  valid:
+    description: 'true when every validated YAML file has no errors.'
+  error_count:
+    description: 'Total number of error-severity diagnostics across all files.'
+  warning_count:
+    description: 'Total number of warning-severity diagnostics across all files.'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'

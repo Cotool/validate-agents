@@ -1,0 +1,12 @@
+apiVersion: cotool.ai/v1
+kind: ResponseAgent
+metadata:
+  sync_key: dag-user-context
+  name: User Context Enrichment
+spec:
+  modelAlias: anthropic:chat:sonnet-4.6
+  systemPrompt:
+    inline: |
+      You enrich user context for an alert. Look up the user in Okta and
+      summarize their profile and recent activity.
+  toolNames: [okta]

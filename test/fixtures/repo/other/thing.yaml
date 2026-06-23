@@ -1,0 +1,4 @@
+apiVersion: cotool.ai/v1
+kind: SomethingElse
+metadata:
+  name: Outside the agents dir
