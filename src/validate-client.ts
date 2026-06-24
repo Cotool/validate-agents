@@ -108,6 +108,10 @@ export function normalizeResponse(raw: unknown): ValidateResponse {
         ? raw.results.map(normalizeFileResult)
         : [];
 
+    if (results.length === 0) {
+        throw new ValidateApiError('The Cotool API returned no per-file validation results.');
+    }
+
     return {
         valid: typeof raw.valid === 'boolean' ? raw.valid : results.every((r) => r.valid),
         fileCount: typeof raw.fileCount === 'number' ? raw.fileCount : results.length,

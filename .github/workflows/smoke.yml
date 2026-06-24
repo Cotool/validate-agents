@@ -59,6 +59,14 @@ jobs:
             echo "::error::Expected the broken fixture set to fail validation, but it did not."
             exit 1
           fi
+          if [ "${{ steps.broken.outputs.valid }}" != "false" ]; then
+            echo "::error::Expected validation to report valid=false, but got '${{ steps.broken.outputs.valid }}'."
+            exit 1
+          fi
+          if [ "${{ steps.broken.outputs.error_count }}" = "" ] || [ "${{ steps.broken.outputs.error_count }}" = "0" ]; then
+            echo "::error::Expected validation to report at least one error, but got '${{ steps.broken.outputs.error_count }}'."
+            exit 1
+          fi
           echo "Broken fixture correctly failed validation."
 
   # No live job: the action authenticates only via GitHub OIDC, which GitHub mints solely

@@ -12,7 +12,12 @@ function jsonResponse(body: unknown, status = 200): Response {
 describe('callValidate', () => {
     it('posts files as a single batch to the validate path with the auth header', async () => {
         const fetchImpl = vi.fn(async (_url: string, _init: RequestInit) =>
-            jsonResponse({ valid: true, fileCount: 1, agentCount: 1, results: [] }),
+            jsonResponse({
+                valid: true,
+                fileCount: 1,
+                agentCount: 1,
+                results: [{ path: 'cotool/agents/a.yaml', valid: true, errors: [], warnings: [] }],
+            }),
         );
 
         await callValidate({
@@ -138,5 +143,11 @@ describe('normalizeResponse', () => {
 
     it('throws on a non-object response', () => {
         expect(() => normalizeResponse('not json')).toThrow(ValidateApiError);
+    });
+
+    it('throws when the response has no per-file results', () => {
+        expect(() => normalizeResponse({ valid: true, fileCount: 1, agentCount: 1, results: [] })).toThrow(
+            ValidateApiError,
+        );
     });
 });
