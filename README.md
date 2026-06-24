@@ -84,13 +84,12 @@ npm run all       # typecheck + test + build
 `dist/index.js` is committed — GitHub runs the action from it. CI fails if it drifts from a
 fresh build.
 
-### Local end-to-end
+### Local testing
 
-GitHub only mints OIDC tokens inside real Actions runs, so the action's auth path can't
-be driven against a local backend. There are two complementary ways to test locally:
-
-**1. Full bundle against the offline stub.** The stub doubles as a fake OIDC token service,
-so the real `core.getIDToken` code path runs:
+GitHub only mints OIDC tokens inside real Actions runs, so the action's OIDC auth path
+can't be driven locally. You can still exercise the full bundle offline — the bundled
+smoke stub stands in for both the validate API and GitHub's OIDC token service, so the
+real `core.getIDToken` code path runs with no secret and no network:
 
 ```bash
 node test/smoke/stub-server.mjs 7799 &
@@ -102,21 +101,14 @@ ACTIONS_ID_TOKEN_REQUEST_TOKEN=stub \
 node dist/index.js
 ```
 
-**2. Internals against a real `make dev` backend.** The guarded vitest e2e exercises
-discovery + the validate client against the live endpoint using an API-key Bearer
-(bypassing the action's OIDC-only auth surface — the endpoint still accepts keys):
-
-```bash
-E2E_API_URL=http://localhost:3000 E2E_API_KEY=<cotool-api-key> npm test
-```
-
-Without those env vars the e2e test is skipped.
+The suite also includes an optional end-to-end test that runs only when `E2E_API_URL` and
+`E2E_API_KEY` are set (pointing at a reachable Cotool API); it is skipped otherwise.
 
 ## Releasing
 
 `dist/index.js` is committed and CI enforces it matches a fresh build, so a release is just a tag:
 
-1. Merge to `main` with a green CI (build + tests + dist drift check).
+1. Merge to `master` with a green CI (build + tests + dist drift check).
 2. Tag an immutable `v1.0.0` and move the `v1` major tag to it; reference `@v1` from docs.
    ```bash
    git tag v1.0.0 && git tag -f v1 && git push origin v1.0.0 && git push -f origin v1
