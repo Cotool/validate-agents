@@ -40,5 +40,5 @@ outputs:
     description: 'Total number of warning-severity diagnostics across all files.'
 
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'dist/index.js'
