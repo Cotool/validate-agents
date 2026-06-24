@@ -1,8 +1,7 @@
-# Smoke tests for the built Action.
-#
-# Same dormant-until-promotion note as ci.yml: GitHub runs workflows only from the repo
-# root, so this activates once the dir is promoted to `cotool/validate-agents` (where the
-# action is at `./`). The `uses: ./` references below assume that root layout.
+# Smoke tests for the built Action. The offline job runs the real bundle against a local
+# stub of the validate API (and of GitHub's OIDC token service), so the OIDC code path
+# runs end-to-end with no secret or reachable API. `uses: ./` resolves to this repo's
+# root action.yml.
 name: smoke
 
 on:

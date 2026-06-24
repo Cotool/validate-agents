@@ -1,9 +1,5 @@
-# CI for the validate-agents Action.
-#
-# NOTE: while this lives inside the cogent-client monorepo as a prototype, GitHub only
-# runs workflows from the repo *root* `.github/workflows/`, so this file is dormant here.
-# On promotion to the public `cotool/validate-agents` repo (where action.yml sits at the
-# root) it becomes the active CI. No path changes are needed.
+# CI for the validate-agents Action: build, typecheck, tests, and a dist drift check
+# (the committed dist/index.js bundle must match a fresh `npm run build`).
 name: ci
 
 on:
