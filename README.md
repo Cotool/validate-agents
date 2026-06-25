@@ -26,6 +26,31 @@ jobs:
 > (Settings → Agents → GitOps sync). That registration is what authorizes the repo — no API
 > key to store or rotate.
 
+## AI editor setup (optional)
+
+If you use Claude Code or Cursor, you can install a `/setup-validate-agents` slash command
+that wires up the workflow file for you automatically.
+
+**Claude Code**
+
+```bash
+mkdir -p .claude/commands && curl -fsSL \
+  https://raw.githubusercontent.com/Cotool/validate-agents/master/.claude/commands/setup-validate-agents.md \
+  -o .claude/commands/setup-validate-agents.md
+```
+
+**Cursor**
+
+```bash
+mkdir -p .cursor/commands && curl -fsSL \
+  https://raw.githubusercontent.com/Cotool/validate-agents/master/.cursor/commands/setup-validate-agents.md \
+  -o .cursor/commands/setup-validate-agents.md
+```
+
+Run one of the above in your repo, then type `/setup-validate-agents` in the editor chat.
+The agent will find your agent directory, create the workflow file, and remind you about the
+GitOps sync prerequisite.
+
 ## Inputs
 
 | Input | Required | Default | Description |
