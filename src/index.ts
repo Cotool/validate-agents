@@ -29,7 +29,8 @@ async function run(): Promise<void> {
         core.setOutput('warning_count', '0');
         return;
     }
-    core.info(`Validating ${paths.length} file(s) from "${dir}":\n${paths.map((p) => `  - ${p}`).join('\n')}`);
+    const source = file.trim().length > 0 ? 'the "file" input' : `"${dir}"`;
+    core.info(`Validating ${paths.length} file(s) from ${source}:\n${paths.map((p) => `  - ${p}`).join('\n')}`);
 
     // 2. Read contents (utf8) into the request batch.
     const files = await readFiles(workspace, paths);

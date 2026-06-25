@@ -37345,12 +37345,10 @@ function normalizeResponse(raw) {
     if (!isRecord(raw)) {
         throw new ValidateApiError('The Cotool API returned an unexpected response shape.');
     }
-    const results = Array.isArray(raw.results)
-        ? raw.results.map(normalizeFileResult)
-        : [];
-    if (results.length === 0) {
-        throw new ValidateApiError('The Cotool API returned no per-file validation results.');
+    if (!Array.isArray(raw.results)) {
+        throw new ValidateApiError('The Cotool API returned an unexpected response shape.');
     }
+    const results = raw.results.map(normalizeFileResult);
     return {
         valid: typeof raw.valid === 'boolean' ? raw.valid : results.every((r) => r.valid),
         fileCount: typeof raw.fileCount === 'number' ? raw.fileCount : results.length,
@@ -37412,7 +37410,8 @@ async function run() {
         setOutput('warning_count', '0');
         return;
     }
-    info(`Validating ${paths.length} file(s) from "${dir}":\n${paths.map((p) => `  - ${p}`).join('\n')}`);
+    const source = file.trim().length > 0 ? 'the "file" input' : `"${dir}"`;
+    info(`Validating ${paths.length} file(s) from ${source}:\n${paths.map((p) => `  - ${p}`).join('\n')}`);
     // 2. Read contents (utf8) into the request batch.
     const files = await readFiles(workspace, paths);
     // 3. Mint a GitHub OIDC token and call the validate endpoint.

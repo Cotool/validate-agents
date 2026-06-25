@@ -145,9 +145,8 @@ describe('normalizeResponse', () => {
         expect(() => normalizeResponse('not json')).toThrow(ValidateApiError);
     });
 
-    it('throws when the response has no per-file results', () => {
-        expect(() => normalizeResponse({ valid: true, fileCount: 1, agentCount: 1, results: [] })).toThrow(
-            ValidateApiError,
-        );
+    it('allows an empty result set when there are no YAML files to validate', () => {
+        const res = normalizeResponse({ valid: true, fileCount: 0, agentCount: 0, results: [] });
+        expect(res).toEqual({ valid: true, fileCount: 0, agentCount: 0, results: [] });
     });
 });

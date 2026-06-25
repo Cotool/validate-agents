@@ -104,13 +104,11 @@ export function normalizeResponse(raw: unknown): ValidateResponse {
         throw new ValidateApiError('The Cotool API returned an unexpected response shape.');
     }
 
-    const results = Array.isArray(raw.results)
-        ? raw.results.map(normalizeFileResult)
-        : [];
-
-    if (results.length === 0) {
-        throw new ValidateApiError('The Cotool API returned no per-file validation results.');
+    if (!Array.isArray(raw.results)) {
+        throw new ValidateApiError('The Cotool API returned an unexpected response shape.');
     }
+
+    const results = raw.results.map(normalizeFileResult);
 
     return {
         valid: typeof raw.valid === 'boolean' ? raw.valid : results.every((r) => r.valid),
