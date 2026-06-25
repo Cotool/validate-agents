@@ -1,0 +1,10 @@
+apiVersion: cotool.ai/v1
+kind: ResponseAgent
+metadata:
+  sync_key: responder-phishing
+  name: Phishing Responder
+spec:
+  modelAlias: anthropic:chat:sonnet-4.6
+  systemPrompt:
+    file: prompts/responder.md
+  toolNames: [slack]

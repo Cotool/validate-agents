@@ -1,0 +1,75 @@
+# Smoke tests for the built Action. The offline job runs the real bundle against a local
+# stub of the validate API (and of GitHub's OIDC token service), so the OIDC code path
+# runs end-to-end with no secret or reachable API. `uses: ./` resolves to this repo's
+# root action.yml.
+name: smoke
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 7 * * 1' # weekly, exercises the live job
+
+jobs:
+  # Offline: run the built action against fixtures using a local stub of the API.
+  # No secret or reachable API required, so it runs on every PR (including forks).
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Start validate API stub
+        run: |
+          node test/smoke/stub-server.mjs 7799 &
+          echo "STUB_PID=$!" >> "$GITHUB_ENV"
+          sleep 1
+
+      # The action authenticates only via OIDC. Point the OIDC token-request env vars at
+      # the stub so `core.getIDToken` runs its real code path offline (the stub returns a
+      # dummy token and the stub validate endpoint doesn't verify it).
+      - name: Valid fixtures pass
+        uses: ./
+        env:
+          ACTIONS_ID_TOKEN_REQUEST_URL: 'http://127.0.0.1:7799/oidc?stub=1'
+          ACTIONS_ID_TOKEN_REQUEST_TOKEN: stub
+        with:
+          api_url: http://127.0.0.1:7799
+          file: test/fixtures/repo/cotool/agents/triage.yaml,test/fixtures/repo/cotool/agents/responder.yaml,test/fixtures/repo/cotool/agents/nested/dag.yml
+
+      - name: Broken fixture fails
+        id: broken
+        continue-on-error: true
+        uses: ./
+        env:
+          ACTIONS_ID_TOKEN_REQUEST_URL: 'http://127.0.0.1:7799/oidc?stub=1'
+          ACTIONS_ID_TOKEN_REQUEST_TOKEN: stub
+        with:
+          api_url: http://127.0.0.1:7799
+          dir: test/fixtures/repo/cotool/agents
+
+      - name: Assert the broken run failed
+        run: |
+          if [ "${{ steps.broken.outcome }}" != "failure" ]; then
+            echo "::error::Expected the broken fixture set to fail validation, but it did not."
+            exit 1
+          fi
+          if [ "${{ steps.broken.outputs.valid }}" != "false" ]; then
+            echo "::error::Expected validation to report valid=false, but got '${{ steps.broken.outputs.valid }}'."
+            exit 1
+          fi
+          if [ "${{ steps.broken.outputs.error_count }}" = "" ] || [ "${{ steps.broken.outputs.error_count }}" = "0" ]; then
+            echo "::error::Expected validation to report at least one error, but got '${{ steps.broken.outputs.error_count }}'."
+            exit 1
+          fi
+          echo "Broken fixture correctly failed validation."
+
+  # No live job: the action authenticates only via GitHub OIDC, which GitHub mints solely
+  # inside real Actions runs and which the Cotool API authorizes by matching the repo to a
+  # GitOps-sync-registered org. Real OIDC coverage therefore comes from actual consumer
+  # runs against the deployed API, not a self-test here.

@@ -1,0 +1,12 @@
+apiVersion: cotool.ai/v1
+kind: ResponseAgent
+metadata:
+  sync_key: triage-suspicious-login
+  name: Triage Suspicious Login
+spec:
+  modelAlias: anthropic:chat:sonnet-4.6
+  systemPrompt:
+    inline: |
+      You triage suspicious-login alerts. Review the signal, assess the risk,
+      and post a concise summary to Slack.
+  toolNames: [slack]
