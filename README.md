@@ -1,16 +1,8 @@
 # Cotool Validate Agents — GitHub Action
 
-Validate your [Cotool Response-Agents-as-Code](https://app.cotool.ai) YAML on every pull
-request. The action discovers your agent files, posts them to the Cotool validate API
-(`POST /api/agent-sync/validate`) — the same parse, schema, and cross-file graph checks the
-GitOps sync engine runs — and reports any problems as inline PR annotations.
+A GitHub Action that validates your [Cotool Response-Agents-as-Code](https://app.cotool.ai) YAML on every pull request and reports errors as inline PR annotations.
 
 ## Usage
-
-### Recommended: GitHub OIDC (no stored secret)
-
-The job mints a short-lived GitHub OIDC token; Cotool verifies it and maps the repository to
-your org via your GitOps sync configuration. Nothing to store or rotate.
 
 ```yaml
 # .github/workflows/validate-agents.yml
@@ -30,24 +22,38 @@ jobs:
           dir: cotool/agents
 ```
 
-> Requires that this repository is configured as your org's agents source in Cotool
-> (Settings → Agents → GitOps sync). That registration is what authorizes the repo.
-
-This action authenticates **only** via GitHub OIDC — it never takes an API key. The job
-must grant `permissions: id-token: write`. (The Cotool validate endpoint itself also
-accepts an API key, but only for programmatic or self-hosted callers hitting
-`POST /api/agent-sync/validate` directly — not through this action.)
+> **Prerequisite:** this repository must be configured as your org's agents source in Cotool
+> (Settings → Agents → GitOps sync). That registration is what authorizes the repo — no API
+> key to store or rotate.
 
 ## Inputs
 
-| Input | Default | Description |
-|-------|---------|-------------|
-| `api_url` | `https://app.cotool.ai` | Base URL of the Cotool API. |
-| `dir` | `cotool/agents` | Directory to scan for agent YAML (and referenced prompt `.md`). Matches the GitOps sync `path` default. |
-| `file` | — | Comma-separated explicit file list. Overrides directory discovery. |
-| `recursive` | `true` | Recurse into subdirectories of `dir`. |
-| `audience` | `cotool-validate` | OIDC audience requested from GitHub and verified by the API. |
-| `fail_on_warnings` | `false` | Fail the check when warnings are present (errors always fail). |
+| Input | Required | Default | Description |
+|-------|----------|---------|-------------|
+| `dir` | No | `cotool/agents` | Directory to scan for agent YAML (and referenced prompt `.md`). Matches the GitOps sync `path` default. |
+| `file` | No | — | Comma-separated explicit file list. Overrides directory discovery. |
+| `recursive` | No | `true` | Recurse into subdirectories of `dir`. |
+| `fail_on_warnings` | No | `false` | Fail the check when warnings are present (errors always fail). |
+| `api_url` | No | `https://app.cotool.ai` | Base URL of the Cotool API. |
+| `audience` | No | `cotool-validate` | OIDC audience requested from GitHub and verified by the API. |
+
+### Discovering files
+
+If neither `file` nor `dir` is specified the action falls back to scanning `cotool/agents`
+recursively — the same default the GitOps sync engine uses, so no extra configuration is
+needed for the common layout.
+
+Use `file` when you want to validate a specific subset:
+
+```yaml
+- uses: cotool/validate-agents@v1
+  with:
+    file: cotool/agents/my-agent.yaml,cotool/agents/other-agent.yaml
+```
+
+Warnings surface checks that require live org state the action can't see (a missing
+`systemPrompt.file`, or an `agentTools` reference to a sync_key outside the posted set) and
+never fail the run on their own. Set `fail_on_warnings: true` to treat them as errors.
 
 ## Outputs
 
@@ -56,20 +62,6 @@ accepts an API key, but only for programmatic or self-hosted callers hitting
 | `valid` | `true` when every validated YAML file has no errors. |
 | `error_count` | Total error-severity diagnostics. |
 | `warning_count` | Total warning-severity diagnostics. |
-
-## How it works
-
-1. **Discover** — globs `dir` for `*.yaml`/`*.yml` (plus every `*.md`, so `systemPrompt.file`
-   references resolve). Mirrors the sync engine's discovery. `file` overrides this.
-2. **Post once** — sends all files in a single request so cross-file checks (duplicate
-   `sync_key`, `agentTools` references, dependency cycles) work.
-3. **Annotate** — emits `::error`/`::warning` per diagnostic, at the file's line when the API
-   provides one (`yaml_error` positions). Writes a summary table.
-4. **Fail** — non-zero exit when any file is invalid, or on warnings if `fail_on_warnings`.
-   An empty discovery warns and exits 0 (a misconfigured `dir` shouldn't hard-fail CI).
-
-Warnings are checks that need live org state the request can't see (an unprovided
-`systemPrompt.file`, or an `agentTools` sync_key not in the posted set) and never fail the run.
 
 ## Development
 
@@ -114,3 +106,16 @@ The suite also includes an optional end-to-end test that runs only when `E2E_API
    git tag v1.0.0 && git tag -f v1 && git push origin v1.0.0 && git push -f origin v1
    ```
 3. Consumers pin `uses: cotool/validate-agents@v1` and grant `permissions: id-token: write`.
+
+## How it works
+
+The action discovers agent files by globbing `dir` for `*.yaml`/`*.yml` plus every `*.md`
+(so `systemPrompt.file` references resolve), then sends them in a single request to the
+Cotool validate API — the same parse, schema, and cross-file graph checks the GitOps sync
+engine runs on merge. Bundling everything into one request is what makes cross-file checks
+work (duplicate `sync_key`, `agentTools` references, dependency cycles).
+
+Per-diagnostic `::error` and `::warning` annotations are emitted for each finding, at the
+file's line when the API provides one. The action exits non-zero when any file is invalid,
+or when warnings are present and `fail_on_warnings` is set. An empty discovery warns and
+exits 0 — a misconfigured `dir` shouldn't hard-fail CI.
