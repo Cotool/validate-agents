@@ -37421,11 +37421,12 @@ async function run() {
     // 4. Annotate + summarize + set outputs + decide pass/fail.
     annotate(response);
     const { errorCount, warningCount } = countDiagnostics(response.results);
-    await writeSummary(response, errorCount, warningCount);
-    setOutput('valid', String(response.valid));
+    const valid = response.valid && errorCount === 0;
+    await writeSummary(response, valid, errorCount, warningCount);
+    setOutput('valid', String(valid));
     setOutput('error_count', String(errorCount));
     setOutput('warning_count', String(warningCount));
-    if (!response.valid) {
+    if (!valid) {
         setFailed(`Validation failed: ${errorCount} error(s) across ${response.fileCount} file(s).`);
         return;
     }
@@ -37470,7 +37471,7 @@ function countDiagnostics(results) {
     }
     return { errorCount, warningCount };
 }
-async function writeSummary(response, errorCount, warningCount) {
+async function writeSummary(response, valid, errorCount, warningCount) {
     const rows = response.results.map((r) => [
         r.path,
         r.valid ? '✓' : '✗',
@@ -37479,7 +37480,7 @@ async function writeSummary(response, errorCount, warningCount) {
     ]);
     summary
         .addHeading('Cotool Agent Validation', 2)
-        .addRaw(`**${response.valid ? '✓ valid' : '✗ invalid'}** — ${response.fileCount} file(s), ${response.agentCount} agent(s), ${errorCount} error(s), ${warningCount} warning(s).`)
+        .addRaw(`**${valid ? '✓ valid' : '✗ invalid'}** — ${response.fileCount} file(s), ${response.agentCount} agent(s), ${errorCount} error(s), ${warningCount} warning(s).`)
         .addTable([
         [
             { data: 'File', header: true },

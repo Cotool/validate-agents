@@ -44,13 +44,14 @@ async function run(): Promise<void> {
     // 4. Annotate + summarize + set outputs + decide pass/fail.
     annotate(response);
     const { errorCount, warningCount } = countDiagnostics(response.results);
-    await writeSummary(response, errorCount, warningCount);
+    const valid = response.valid && errorCount === 0;
+    await writeSummary(response, valid, errorCount, warningCount);
 
-    core.setOutput('valid', String(response.valid));
+    core.setOutput('valid', String(valid));
     core.setOutput('error_count', String(errorCount));
     core.setOutput('warning_count', String(warningCount));
 
-    if (!response.valid) {
+    if (!valid) {
         core.setFailed(`Validation failed: ${errorCount} error(s) across ${response.fileCount} file(s).`);
         return;
     }
@@ -103,6 +104,7 @@ function countDiagnostics(results: FileResult[]): { errorCount: number; warningC
 
 async function writeSummary(
     response: ValidateResponse,
+    valid: boolean,
     errorCount: number,
     warningCount: number,
 ): Promise<void> {
@@ -116,7 +118,7 @@ async function writeSummary(
     core.summary
         .addHeading('Cotool Agent Validation', 2)
         .addRaw(
-            `**${response.valid ? '✓ valid' : '✗ invalid'}** — ${response.fileCount} file(s), ${response.agentCount} agent(s), ${errorCount} error(s), ${warningCount} warning(s).`,
+            `**${valid ? '✓ valid' : '✗ invalid'}** — ${response.fileCount} file(s), ${response.agentCount} agent(s), ${errorCount} error(s), ${warningCount} warning(s).`,
         )
         .addTable([
             [
