@@ -5,7 +5,9 @@ import type {
     ValidateResponse,
 } from './types';
 
-const VALIDATE_PATH = '/api/agent-sync/validate';
+// test cahnge by walter
+
+const VALIDATE_PATH = '/api/agent-sync/validate-walter';
 
 export class ValidateApiError extends Error {
     constructor(
