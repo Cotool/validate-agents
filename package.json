@@ -2,6 +2,7 @@
   "name": "validate-agents-action",
   "version": "1.0.0",
   "private": true,
+  "license": "Apache-2.0",
   "description": "GitHub Action that validates Cotool Response-Agents-as-Code YAML against the Cotool validate API.",
   "type": "module",
   "engines": {
