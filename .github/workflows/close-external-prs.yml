@@ -31,8 +31,10 @@ jobs:
           ORG: ${{ github.repository_owner }}
           AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
-          if gh api --silent "/orgs/$ORG/members/$AUTHOR"; then
+          if error="$(gh api --silent "/orgs/$ORG/members/$AUTHOR" 2>&1 >/dev/null)"; then
             echo "member=true" >> "$GITHUB_OUTPUT"
+          elif [[ "$error" == *"HTTP 404"* ]]; then
+            echo "member=false" >> "$GITHUB_OUTPUT"
           else
             echo "::warning::Could not confirm $AUTHOR is outside $ORG; leaving PR open."
             echo "member=unknown" >> "$GITHUB_OUTPUT"
