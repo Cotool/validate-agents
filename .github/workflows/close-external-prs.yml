@@ -1,10 +1,18 @@
 # This repository does not accept external contributions — PRs are limited to the Cotool
 # team. GitHub can't prevent an outsider from opening a fork PR on a public repo, so this
-# workflow politely closes any PR whose author isn't an org member/collaborator.
+# workflow politely closes any PR whose author lacks write access to the repo.
+#
+# Why the repo-permission endpoint (not /orgs/{org}/members): the ephemeral GITHUB_TOKEN is
+# not itself an org member, so /orgs/{org}/members/{user} only sees *public* members and
+# returns 404 for members whose org membership is private — closing their legit PRs. The
+# collaborators/{user}/permission endpoint instead reports the author's *effective* repo
+# access (admin/write/triage/read/none), which is unaffected by membership visibility.
+# On a public repo every user resolves to at least `read`, so we treat write/admin as the
+# team and read/none as external.
 #
 # Safety: it uses `pull_request_target` (so the GITHUB_TOKEN can write to the PR) but never
 # checks out or runs the PR's code — it only reads event metadata and calls the PR API.
-# Token scope is limited to `pull-requests: write`.
+# Token scope is limited to `pull-requests: write` (+ `contents: read` for the API read).
 name: close-external-prs
 
 on:
@@ -13,35 +21,39 @@ on:
 
 permissions:
   pull-requests: write
+  contents: read
 
 jobs:
   close:
     runs-on: ubuntu-latest
-    # author_association can report org members as CONTRIBUTOR, so verify org
-    # membership before closing authors that are not direct repo members.
+    # Fast-path: skip authors GitHub already reports as team. This is only an optimization —
+    # author_association reports private org members as CONTRIBUTOR/NONE, so the access check
+    # below is the source of truth for anyone who falls through.
     if: >-
       github.event.pull_request.author_association != 'OWNER' &&
       github.event.pull_request.author_association != 'MEMBER' &&
       github.event.pull_request.author_association != 'COLLABORATOR'
     steps:
-      - name: Check org membership
-        id: org-member
+      - name: Check repo access
+        id: access
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ORG: ${{ github.repository_owner }}
           AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
-          if error="$(gh api --silent "/orgs/$ORG/members/$AUTHOR" 2>&1 >/dev/null)"; then
-            echo "member=true" >> "$GITHUB_OUTPUT"
-          elif [[ "$error" == *"HTTP 404"* ]]; then
-            echo "member=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "::warning::Could not confirm $AUTHOR is outside $ORG; leaving PR open."
-            echo "member=unknown" >> "$GITHUB_OUTPUT"
-          fi
+          perm="$(gh api "/repos/$GITHUB_REPOSITORY/collaborators/$AUTHOR/permission" \
+            --jq '.permission' 2>/dev/null || echo error)"
+          case "$perm" in
+            admin|write)
+              echo "member=true"  >> "$GITHUB_OUTPUT" ;;
+            read|none)
+              echo "member=false" >> "$GITHUB_OUTPUT" ;;
+            *)
+              echo "::warning::Could not resolve repo access for $AUTHOR (got '$perm'); leaving PR open."
+              echo "member=unknown" >> "$GITHUB_OUTPUT" ;;
+          esac
 
       - name: Comment and close
-        if: steps.org-member.outputs.member == 'false'
+        if: steps.access.outputs.member == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.number }}
