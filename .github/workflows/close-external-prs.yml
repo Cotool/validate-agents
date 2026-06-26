@@ -34,11 +34,12 @@ jobs:
           if gh api --silent "/orgs/$ORG/members/$AUTHOR"; then
             echo "member=true" >> "$GITHUB_OUTPUT"
           else
-            echo "member=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Could not confirm $AUTHOR is outside $ORG; leaving PR open."
+            echo "member=unknown" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Comment and close
-        if: steps.org-member.outputs.member != 'true'
+        if: steps.org-member.outputs.member == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.number }}
