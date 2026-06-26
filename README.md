@@ -121,6 +121,12 @@ node dist/index.js
 The suite also includes an optional end-to-end test that runs only when `E2E_API_URL` and
 `E2E_API_KEY` are set (pointing at a reachable Cotool API); it is skipped otherwise.
 
+## Contributing
+
+This repository does not accept external contributions — pull requests are limited to the
+Cotool team, and PRs opened from outside the org are closed automatically. If you've found a
+bug or have a request, please [open an issue](https://github.com/Cotool/validate-agents/issues).
+
 ## Releasing
 
 `dist/index.js` is committed and CI enforces it matches a fresh build, so a release is just a tag:
@@ -144,3 +150,7 @@ Per-diagnostic `::error` and `::warning` annotations are emitted for each findin
 file's line when the API provides one. The action exits non-zero when any file is invalid,
 or when warnings are present and `fail_on_warnings` is set. An empty discovery warns and
 exits 0 — a misconfigured `dir` shouldn't hard-fail CI.
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE).
