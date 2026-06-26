@@ -17,14 +17,28 @@ permissions:
 jobs:
   close:
     runs-on: ubuntu-latest
-    # author_association is MEMBER/OWNER/COLLABORATOR for internal authors; anything else
-    # (CONTRIBUTOR, FIRST_TIME_CONTRIBUTOR, NONE, ...) is external.
+    # author_association can report org members as CONTRIBUTOR, so verify org
+    # membership before closing authors that are not direct repo members.
     if: >-
       github.event.pull_request.author_association != 'OWNER' &&
       github.event.pull_request.author_association != 'MEMBER' &&
       github.event.pull_request.author_association != 'COLLABORATOR'
     steps:
+      - name: Check org membership
+        id: org-member
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ORG: ${{ github.repository_owner }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          if gh api --silent "/orgs/$ORG/members/$AUTHOR"; then
+            echo "member=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "member=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Comment and close
+        if: steps.org-member.outputs.member != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.number }}
