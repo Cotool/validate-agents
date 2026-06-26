@@ -121,6 +121,12 @@ node dist/index.js
 The suite also includes an optional end-to-end test that runs only when `E2E_API_URL` and
 `E2E_API_KEY` are set (pointing at a reachable Cotool API); it is skipped otherwise.
 
+## Contributing
+
+This repository does not accept external contributions — pull requests are limited to the
+Cotool team, and PRs opened from outside the org are closed automatically. If you've found a
+bug or have a request, please [open an issue](https://github.com/Cotool/validate-agents/issues).
+
 ## Releasing
 
 `dist/index.js` is committed and CI enforces it matches a fresh build, so a release is just a tag:

@@ -1,0 +1,34 @@
+# This repository does not accept external contributions — PRs are limited to the Cotool
+# team. GitHub can't prevent an outsider from opening a fork PR on a public repo, so this
+# workflow politely closes any PR whose author isn't an org member/collaborator.
+#
+# Safety: it uses `pull_request_target` (so the GITHUB_TOKEN can write to the PR) but never
+# checks out or runs the PR's code — it only reads event metadata and calls the PR API.
+# Token scope is limited to `pull-requests: write`.
+name: close-external-prs
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    # author_association is MEMBER/OWNER/COLLABORATOR for internal authors; anything else
+    # (CONTRIBUTOR, FIRST_TIME_CONTRIBUTOR, NONE, ...) is external.
+    if: >-
+      github.event.pull_request.author_association != 'OWNER' &&
+      github.event.pull_request.author_association != 'MEMBER' &&
+      github.event.pull_request.author_association != 'COLLABORATOR'
+    steps:
+      - name: Comment and close
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body \
+            "Thanks for your interest! This repository does not accept external contributions — pull requests are limited to the Cotool team, so this PR is being closed automatically. If you've found a bug or have a request, please open an issue instead."
+          gh pr close "$PR" --repo "$GITHUB_REPOSITORY"
