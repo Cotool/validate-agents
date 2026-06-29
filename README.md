@@ -1,6 +1,6 @@
 # Cotool Validate Agents — GitHub Action
 
-A GitHub Action that validates your [Cotool Response-Agents-as-Code](https://app.cotool.ai) YAML on every pull request and reports errors as inline PR annotations.
+A GitHub Action that validates your [Cotool Response-Agents-as-Code](https://docs.cotool.ai/agents/response-agents-as-code#validate-in-ci) YAML on every pull request and reports errors as inline PR annotations.
 
 ## Usage
 
