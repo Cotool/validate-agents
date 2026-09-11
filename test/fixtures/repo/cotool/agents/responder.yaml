@@ -7,4 +7,15 @@ spec:
   modelAlias: anthropic:chat:sonnet-4.6
   systemPrompt:
     file: prompts/responder.md
-  toolNames: [slack]
+  toolNames:
+    - slack_sendMessage
+    - slack_replyToThread
+    - slack_readChannelMessages
+    - slack_getChannelDetails
+    - slack_readThreadMessages
+    - slack_reactToMessage
+    - slack_getUsersByIds
+    - slack_findUsers
+    - slack_searchChannels
+    - slack_downloadFile
+    - slack_waitForUserResponse

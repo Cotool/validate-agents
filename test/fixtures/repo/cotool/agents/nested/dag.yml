@@ -9,4 +9,17 @@ spec:
     inline: |
       You enrich user context for an alert. Look up the user in Okta and
       summarize their profile and recent activity.
-  toolNames: [okta]
+  toolNames:
+    - okta_listSystemLogs
+    - okta_listUserLogs
+    - okta_listSystemLogEventsByCorrelation
+    - okta_retrieveUser
+    - okta_revokeUserSessions
+    - okta_listUsers
+    - okta_listGroups
+    - okta_suspendUser
+    - okta_listGroupUsers
+    - okta_listGroupApps
+    - okta_listApplicationUsers
+    - okta_listUserGrants
+    - okta_get

@@ -9,4 +9,15 @@ spec:
     inline: |
       You triage suspicious-login alerts. Review the signal, assess the risk,
       and post a concise summary to Slack.
-  toolNames: [slack]
+  toolNames:
+    - slack_sendMessage
+    - slack_replyToThread
+    - slack_readChannelMessages
+    - slack_getChannelDetails
+    - slack_readThreadMessages
+    - slack_reactToMessage
+    - slack_getUsersByIds
+    - slack_findUsers
+    - slack_searchChannels
+    - slack_downloadFile
+    - slack_waitForUserResponse
