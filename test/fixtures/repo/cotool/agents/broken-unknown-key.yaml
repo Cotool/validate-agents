@@ -5,4 +5,15 @@ metadata:
   name: Broken Unknown Key
 spec:
   modelAlias: anthropic:chat:sonnet-4.6
-  toolNames: [slack]
+  toolNames:
+    - slack_sendMessage
+    - slack_replyToThread
+    - slack_readChannelMessages
+    - slack_getChannelDetails
+    - slack_readThreadMessages
+    - slack_reactToMessage
+    - slack_getUsersByIds
+    - slack_findUsers
+    - slack_searchChannels
+    - slack_downloadFile
+    - slack_waitForUserResponse
